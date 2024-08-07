@@ -1,0 +1,370 @@
+---
+title: "Romania SEM Data Formatting"
+author: "Marissa Dyck"
+date: "2024-08-07"
+output: 
+  html_document:
+    theme: journal
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Before you begin
+
+## Notes
+
+A few notes about this script.
+
+If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[] from tMarissa Dyck's GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
+
+Also make sure you open RStudio through the R project (Romania_SEM.Rproj) this will automatically set your working directory to the correct place (wherever you saved the repository) and ensure you don't have to change the file paths for the data. 
+
+If you have question please email the author,   
+
+Marissa A. Dyck   
+Postdoctoral research fellow    
+University of Victoria    
+School of Environmental Studies     
+Email: [marissadyck17@gmail.com](marissadyck17@gmail.com)    
+
+
+## R and RStudio
+
+Before starting you should ensure you have the latest version of R and RStudio downloaded. This code was generated under R version 4.2.3 and with RStudio version 2024.04.2+764.    
+
+You can download R and RStudio [HERE](https://posit.co/download/rstudio-desktop/)   
+
+
+## R markdown
+
+This script is written in R markdown and thus uses a mix of coding markup languages and R. If you are planning to run this script with new data or make any modifications you will want to be familiar with some basics of R markdown.
+
+Below is an R markdown cheatsheet to help you get started,    
+[R markdown cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf)    
+
+
+## Install packages
+
+If you don't already have the following packages installed, use the code below to install them.
+
+```{r install packages, eval=FALSE}
+
+install.packages(tidyverse) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
+install.packages(janitor)
+```
+
+
+## Load libraries
+
+Then load the packages to your library.
+
+```{r libraries}
+
+library('tidyverse') # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
+library(janitor)
+```
+
+# Data
+
+## Camera data
+
+We can load both data files at once and rowbind them since they have the same columns using a function in the *Purrr* package.
+
+```{r load camera data}
+
+cameras <- 
+  
+# provide file path (e.g. folders to find the data)
+  file.path('data/raw',
+            
+            # provide the file names
+            c('cams_data_winter_2018-2019.csv',
+              'cams_data_autumn_2018-2019.csv')) %>% 
+  
+   # use purrr map to read in files, the ~.x is a placeholder that refers to the object before the last pipe (aka the list of data we are reading in) so all functions inside the map() after ~.x will be performed on all the objects in the list we provided
+  map_dfr(~.x %>%
+        read_csv(.))
+                 
+```
+
+
+
+View this data, by using `View(cameras)` or clicking on the object in the *environment*.
+ 
+
+We need to do a bit of data cleaning to make this file usable for our analysis. The code chunk below will,    
+
+1. read in the data again   
+2. specify how to read in the columns   
+3. set the column names to lowercase for easier coding later   
+4. reformat some columns so data is approporiate for analysis   
+5. seelct only data we need   
+
+```{r format camera data}
+
+cameras <- 
+  
+# provide file path (e.g. folders to find the data)
+  file.path('data/raw',
+            
+            # provide the file names
+            c('cams_data_winter_2018-2019.csv',
+              'cams_data_autumn_2018-2019.csv')) %>% 
+  
+   # use purrr map to read in files, the ~.x is a placeholder that refers to the object before the last pipe (aka the list of data we are reading in) so all functions inside the map() after ~.x will be performed on all the objects in the list we provided
+  map_dfr(~.x %>%
+        read_csv(.,
+                 
+                col_types = cols(Session = col_factor(),
+                                 TrapCode = col_factor(),
+                                     Impact = col_factor(),
+                                     .default = col_number()))) %>% 
+  
+   # set column names to lowercase
+  set_names(
+    names(.) %>% 
+      tolower()) %>% 
+  
+  # Combine specific CORINE Land Cover types for forest into one
+  
+  mutate(clc_forest = (clc311 + clc312 + clc313)) %>% 
+  
+  # select only columns of interest for SEM analysis and merginf with animals data frame
+  
+  select(session, trapcode, z, denslocalr, tri5, clc_forest, distnatlro, distsettle, diststream, distlocalr) 
+                 
+```
+
+Let's take a look at this data using a few common functions
+
+```{r explore cameras data}
+
+# check data structure
+str(cameras)
+
+# summary stats for columns
+summary(cameras)
+
+# print first few rows
+head(cameras,
+     n = 25)
+```
+ 
+Everything looks good. 140 trap sites (trapcode), no NAs
+
+
+
+## Animal data
+ Now let's import the data from the camera traps. 
+ 
+### Import data
+
+This is a csv file with information from the camera traps provided by (Foundation Conservation Carpathia) [https://www.carpathia.org/], their staff and volunteers have already tagged the images and identified the species present in each.
+
+```{r load animals data}
+
+# load species occurrence data
+animals <- read_csv('data/raw/animals_on_cameras_2018-2019.csv') 
+```
+
+View this data, by using `View(animals)` or clicking on the object in the *environment*.
+
+### Format data
+
+We also need to do a bit of data cleaning to make this file usable for our analysis. The code chunk below will,    
+
+1. read in the data again   
+2. specify how to read in the columns   
+3. set the column names to lowercase for easier coding later    
+4. recode some of the entries   
+5. remove data that we won't use    
+
+```{r format animals data}
+
+# load species occurrence data
+
+animals <- read_csv('data/raw/animals_on_cameras_2018-2019.csv',
+                      
+                      # specify how to read in columns
+                      col_types = cols(X = col_number(),
+                                       Y = col_number(),
+                                       Z = col_number(),
+                                       StartDate = col_date(format = '%Y-%m-%d'),
+                                       EndDate = col_date(format = '%Y-%m-%d'),
+                                       RDate = col_date(format = '%Y-%m-%d'),
+                                       Time = col_time(format = '%H:%M:%S'),
+                                       NoAnimals = col_integer(),
+                                       Sequence = col_integer(),
+                                       Comments = col_character(),
+                                       .default = col_factor()  #.default sets any unspecified columns to this type
+                      )) %>% 
+  
+  # set column names to lowercase
+  set_names(
+    names(.) %>% 
+      tolower()) %>% 
+  
+  # select just the columns of data we need to count species observations per season and trap
+  select(session, date, trapcode, type, species) %>% 
+  
+  # recode species data to group some types
+  mutate( species = recode(species, 
+                           'Vehicle' = 'Human',
+                           'Cow' = 'Livestock',
+                           'Goat' = 'Livestock',
+                           'Horse' = 'Livestock',
+                           'Beech marten' = 'Mustelid',
+                           'Pine marten' = 'Mustelid',
+                           'Least weasel' = 'Mustelid',
+                           'European polecat' = 'Mustelid')) %>% 
+  
+  
+  # remove  session 1 (trial period) and unknown species 
+  filter(! session == '1',
+         ! is.na(species),
+         ! species == 'Unknown',
+         
+         # select just the pictures to avoid duplicate occurrences at the same site
+         type == 'P')
+```
+
+Will get an error about parsing issues just ignore.
+
+### Data checks
+
+
+#### Overall
+
+Let's take a look at this data using a few common functions
+
+```{r explore animals data}
+
+# check data structure
+str(animals)
+
+# summary stats for columns
+summary(animals)
+
+# print first few rows
+head(animals,
+     n = 25)
+```
+
+Let's do a few more specific data checks to make sure everything is correct
+
+#### Species names
+
+Let's make sure the species entries are correct and no spelling mistakes 
+
+```{r check species}
+
+levels(animals$species)
+```
+ 
+ Everything looks good here
+ 
+#### Trapcodes
+
+Let's check that no trap codes are mis entered or repeated etc.
+
+```{r check trapcode}
+
+levels(animals$trapcode)
+```
+Hmm there seem to be more than in the camera data, this may be because it's still counting the trapcodes from session 1 even though we filtered those out in the data formatting steps. Let's try something else to check if the trapcodes match the camera data
+
+```{r check trapcodes}
+
+# check which trapcodes are in animals that are not in the cameras data
+setdiff(levels(animals$trapcode),
+        levels(cameras$trapcode))
+
+# and vice versa
+setdiff(levels(cameras$trapcode),
+        levels(animals$trapcode))
+```
+It looks like the animals data has extra trapcodes but no missing ones from the cameras data. I think it is still retainig the codes from session 1 in Rs memory for some reason after we used the filter function to remove them, let's check by looking for any data from the trapcodes printed above
+
+```{r}
+animals %>% 
+  
+  filter(trapcode == '40')
+```
+
+No data, so I think we are good 
+
+### Species occurrence
+
+Now we need to calculate species occurrence from the animals data, the code chunk below will   
+
+1. create a new object called species occurrence that is a product of the animals data   
+2. group the data   
+3. count the number of observations in each group   
+4. pivot the data to wide formate for use in SEM    
+
+
+```{r species occurrence}
+
+# count occurrences per species per season and trap
+
+species_occurrences <- animals %>% 
+  
+  # group data
+  group_by(session, trapcode, species) %>% 
+  
+  # use summarize to count data
+  summarize(n = n()) %>% 
+  
+  pivot_wider(names_from = species,
+              values_from = n,
+              values_fill = 0) 
+
+
+```
+
+
+Now let's remove the old data we don't need anymore
+
+```{r remove animals data}
+# remove animals data from global env
+
+rm(animals)
+```
+
+
+## Merge camera and occurrence
+
+Let's merge the camera and occurrence data into one file we can use for analysis
+
+```{r merge cams and occurrences}
+
+# merge species occurrence data with the camera site variables from cams
+
+ro_sem_dat <- species_occurrences %>% 
+  
+  # join with leftjoin
+  left_join(cameras,
+    by = c('session', 'trapcode')) %>% 
+  drop_na() %>% 
+  
+  # set the species column names to lowercase and clean them up
+  set_names(
+    names(.) %>% 
+      tolower()) %>% 
+  clean_names() %>% 
+  rename(hare = european_hare)
+```
+
+## Save new data
+
+Now we need to export and save this data as a csv for later use
+```{r save data}
+
+write_csv(ro_sem_dat, 
+          'data/processed/ro_sem_dat_2018-2019.csv')
+```
+
