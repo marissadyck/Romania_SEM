@@ -54,7 +54,7 @@ If you don't already have the following packages installed, use the code below t
 ```{r install packages, eval=FALSE}
 
 install.packages(tidyverse) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
-install.packages(janitor)
+install.packages(janitor) # used for cleaning up data
 ```
 
 
@@ -65,7 +65,7 @@ Then load the packages to your library.
 ```{r libraries}
 
 library('tidyverse') # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
-library(janitor)
+library(janitor) # used for cleaning up data
 ```
 
 # Data

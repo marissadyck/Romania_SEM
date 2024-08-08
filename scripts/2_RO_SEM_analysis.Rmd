@@ -1,0 +1,350 @@
+---
+title: "Romania SEM"
+author: "Marissa Dyck"
+date: "2024-08-08"
+output: 
+  html_document:
+    theme: journal
+    toc: yes
+    toc_float: yes
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Before you begin
+
+## Notes
+
+A few notes about this script.
+
+If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[] from tMarissa Dyck's GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
+
+Also make sure you open RStudio through the R project (Romania_SEM.Rproj) this will automatically set your working directory to the correct place (wherever you saved the repository) and ensure you don't have to change the file paths for the data. 
+
+If you have question please email the author,   
+
+Marissa A. Dyck   
+Postdoctoral research fellow    
+University of Victoria    
+School of Environmental Studies     
+Email: [marissadyck17@gmail.com](marissadyck17@gmail.com)    
+
+
+## R and RStudio
+
+Before starting you should ensure you have the latest version of R and RStudio downloaded. This code was generated under R version 4.2.3 and with RStudio version 2024.04.2+764.    
+
+You can download R and RStudio [HERE](https://posit.co/download/rstudio-desktop/)   
+
+
+## R markdown
+
+This script is written in R markdown and thus uses a mix of coding markup languages and R. If you are planning to run this script with new data or make any modifications you will want to be familiar with some basics of R markdown.
+
+Below is an R markdown cheatsheet to help you get started,    
+[R markdown cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf)    
+
+
+## Install packages
+
+If you don't already have the following packages installed, use the code below to install them.
+
+```{r install packages, eval=FALSE}
+
+install.packages('tidyverse') 
+install.packages('piecewiseSEM') 
+install.packages("PerformanceAnalytics")
+install.packages("purrrlyr")
+
+```
+
+
+## Load libraries
+
+Then load the packages to your library for this current session.
+
+```{r libraries}
+
+library(piecewiseSEM) # used to run piecewise structural equation models
+library(tidyverse)  # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
+library(PerformanceAnalytics) # generates correlation chart
+library(purrrlyr) # data manipulation
+```
+
+# Data
+
+
+## Import
+
+Let's read in the data that we cleaned and formatted with the earlier code '1_RO_data_formatting'
+
+In this code chunk I will also add columns with the scaled the predictor variables fo analysis
+
+```{r import data}
+
+ro_sem_dat <- read_csv('data/processed/ro_sem_dat_2018-2019.csv') %>% 
+  
+  # scale predictor variables
+  mutate(z.s = scale(z),
+         denslocalr.s = scale(denslocalr),
+         tri5.s = scale(tri5),
+         clc_forest.s = scale(clc_forest))
+
+```
+## Summary statistics
+
+We will want to report some summary statistics for our data, the code chunks below will extract/calculate those details
+
+### Total occurrences
+
+Let's calculate the total occurrences for 8 focal species by session/season
+```{r total occurrences}
+
+ro_sem_dat %>% 
+  
+  # group by session 
+  group_by(session) %>% 
+  
+  # calculate occurrences for species of interest (8)
+  summarise(total_8 = sum(hare, 
+                          fox, 
+                          lynx, 
+                          wolf, 
+                          red_deer, 
+                          roe_deer, 
+                          wild_boar, 
+                          wild_cat))
+
+```
+### Species occurrences
+
+We will also want some summary information for each species
+
+```{r species occurrences}
+
+# total species occurrence summaries
+
+ro_sem_dat %>% 
+  
+  # select species of interest
+  select(badger:otter) %>% 
+  
+  # use purrr map to calculate summary stats for all columns listed
+  dmap(~c(sum(.x), 
+          min(.x), 
+          max(.x),
+          (sum(.x)/3599*100))) %>% 
+  
+  # create columns for new data to report
+  mutate(stat = c('sum', 
+                  'min', 
+                  'max', 
+                  'percent')) %>% 
+  relocate(stat)
+```
+
+### Environmental variables
+
+And we will want to report some summary info on the environmental variables we are using in the analysis
+
+```{r env summary}
+
+ro_sem_dat %>%
+  
+  # select columns of raw data (not scaled)
+  select(z, denslocalr, tri5, clc_forest) %>% 
+  
+  # print summary info for each
+  summary()
+```
+
+## Correlations
+
+Before we run any models we need to test an assumption of idepended and see if any of our potential variables are correlated.
+
+```{r correlations}
+
+# subset data to just environmental variables for correlation tests
+
+ro_sem_env <- ro_sem_dat %>% 
+  select(tri5.s, 
+         clc_forest.s, 
+         denslocalr.s, 
+         z.s)
+
+# get pairwise correlation matrix
+
+chart.Correlation(ro_sem_env,
+                  histogram = TRUE,
+                  pch = 19)
+
+
+```
+
+> all correlations for chosen environmental variables >0.25
+
+
+# Analysis
+
+The code chunks below define the models for our three hypotheses
+
+* top-down  
+* bottom-up   
+* combined    
+
+### Top-down
+
+#### Hypothesis
+
+This first chunk is our initial model as we defined it a priori based on previous research and the literature review
+
+```{r top-down model hypothesis}
+
+sem.top_down_a <- 
+  psem(
+    glm(lynx ~ denslocalr.s + clc_forest.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wolf ~ denslocalr.s + clc_forest.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(fox ~ lynx + wolf, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wild_cat ~ fox + lynx + z.s + tri5.s + clc_forest.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(hare ~ lynx + wild_cat + fox, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(red_deer ~ wolf, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(roe_deer ~ wolf + lynx, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wild_boar ~ wolf, family = poisson(link = 'log'), data = ro_sem_dat),
+    (lynx %~~% wolf)
+  )
+
+summary(sem.top_down_a)
+```
+#### Optimized
+
+Now, based on the tests of directed separation, we will add significant pathways to model that make biological sense and fit hypotheses (top-down) and remove non-significant pathways and pathways with coefficient estimates that do not fit the hypothesis (e.g. positive estimate for a hypothesized negative causal pathway)
+
+```{r top-down model optimized}
+
+sem.top_down_b <- 
+  psem(
+    glm(lynx ~ tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wolf ~ denslocalr.s + z.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(fox ~ lynx + wolf + z.s + clc_forest.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wild_cat ~ lynx + wolf + z.s + clc_forest.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(hare ~  wild_cat, family = poisson(link = 'log'), data = ro_sem_dat),
+    #glm(red_deer ~ wolf, family = poisson(link = 'log'), data = ro_sem_dat),
+    #glm(roe_deer ~ lynx, family = poisson(link = 'log'), data = ro_sem_dat),
+    #glm(wild_boar ~ wolf, family = poisson(link = 'log'), data = ro_sem_dat),
+    (lynx %~~% wolf),
+    (wild_cat %~~% fox),
+    (hare %~~% wolf),
+    (hare %~~% lynx)
+  )
+
+summary(sem.top_down_b)
+
+
+```
+
+
+### Bottom-up
+
+This section will define our bottom-up model
+
+#### Hypothesis
+
+Again, this first chunk is our initial model as we defined it a priori based on previous research and the literature review
+
+```{r bottom-up hypothesis}
+
+sem.bottom_up_a <- 
+  psem(
+    glm(wild_boar ~ clc_forest.s + denslocalr.s + z.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(roe_deer ~ clc_forest.s + denslocalr.s + z.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(red_deer ~ clc_forest.s + z.s + denslocalr.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(hare ~ clc_forest.s + denslocalr.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wild_cat ~ hare, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(fox ~ hare, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wolf ~ red_deer + wild_boar + roe_deer, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(lynx ~ hare + roe_deer, family = poisson(link = 'log'), data = ro_sem_dat),
+    (roe_deer %~~% wild_boar),
+    (red_deer %~~% wild_boar),
+    (hare %~~% wild_boar),
+    (roe_deer %~~% red_deer),
+    (roe_deer %~~% hare),
+    (red_deer %~~% hare)
+  )
+
+summary(sem.bottom_up_a)
+```
+
+#### Optimized
+
+And again,  based on the tests of directed separation, we will add significant pathways to model that make biological sense and fit hypotheses (top-down) and remove non-significant pathways and pathways with coefficient estimates that do not fit the hypothesis (e.g. positive estimate for a hypothesized negative causal pathway)
+
+```{r bottom-up optimized}
+
+sem.bottom_up_b <- 
+  psem(
+    glm(wild_boar ~ clc_forest.s + denslocalr.s + z.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(roe_deer ~ clc_forest.s + z.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(red_deer ~ clc_forest.s + z.s + denslocalr.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(hare ~ tri5.s + z.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    #glm(wild_cat ~ wild_boar, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(fox ~ roe_deer, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wolf ~ red_deer + wild_boar, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(lynx ~ hare, family = poisson(link = 'log'), data = ro_sem_dat),
+    (roe_deer %~~% wild_boar),
+    (red_deer %~~% wild_boar),
+    (hare %~~% wild_boar),
+    (roe_deer %~~% red_deer),
+    (roe_deer %~~% hare),
+    (red_deer %~~% hare),
+    (lynx %~~% wolf),
+    (wolf %~~% fox), 
+    (lynx %~~% fox),
+    (wild_boar %~~% fox),
+    (lynx %~~% wild_boar),
+    (lynx %~~% red_deer)
+  )
+
+summary(sem.bottom_up_b)
+```
+
+### Combined
+
+Lastly we will define a combined model that includes both bottom-up and top-down processes/interactions. This model will be based on the optimized models for both top-down and bottom-up
+
+```{r combined model}
+
+sem.combined <- 
+  psem(
+    glm(lynx ~ tri5.s + hare, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wolf ~ z.s + tri5.s + denslocalr.s + wild_boar, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(fox ~ z.s + tri5.s + wolf + lynx + roe_deer, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wild_cat ~ clc_forest.s + z.s + lynx, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(hare ~ tri5.s + z.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(red_deer ~ clc_forest.s + denslocalr.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(roe_deer ~ clc_forest.s + z.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    glm(wild_boar ~ clc_forest.s + denslocalr.s + z.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
+    (lynx %~~% wolf),
+    (wild_boar %~~% hare),
+    (roe_deer %~~% hare),
+    (red_deer %~~% hare),
+    (wild_boar %~~% red_deer),
+    (red_deer %~~% roe_deer),
+    (wild_boar %~~% roe_deer),
+    (wild_cat %~~% fox),
+    (red_deer %~~% lynx),
+    (wolf %~~% hare),
+    (wild_cat %~~% wild_boar),
+    (wild_cat %~~% roe_deer),
+    (wild_cat %~~% red_deer),
+    (lynx %~~% wild_boar)
+  )
+
+summary(sem.combined,
+        conserve = TRUE)
+
+```
+
+> Based on the Chi-squared and fisher's C the combined model fits the data best
