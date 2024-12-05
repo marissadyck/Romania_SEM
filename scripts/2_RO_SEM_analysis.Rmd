@@ -2,11 +2,13 @@
 title: "Romania SEM"
 author: "Marissa Dyck"
 date: "2024-08-08"
-output: 
+output:
+  pdf_document:
+    toc: true
   html_document:
     theme: journal
-    toc: yes
-    toc_float: yes
+    toc: true
+    toc_float: true
 ---
 
 
@@ -20,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 A few notes about this script.
 
-If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[] from tMarissa Dyck's GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
+If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[https://github.com/marissadyck/Romania_SEM] from Marissa Dyck's GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
 
 Also make sure you open RStudio through the R project (Romania_SEM.Rproj) this will automatically set your working directory to the correct place (wherever you saved the repository) and ensure you don't have to change the file paths for the data. 
 
@@ -66,7 +68,7 @@ install.packages("purrrlyr")
 
 Then load the packages to your library for this current session.
 
-```{r libraries}
+```{r libraries, message=FALSE}
 
 library(piecewiseSEM) # used to run piecewise structural equation models
 library(tidyverse)  # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
@@ -165,7 +167,7 @@ ro_sem_dat %>%
 
 Before we run any models we need to test an assumption of idepended and see if any of our potential variables are correlated.
 
-```{r correlations}
+```{r correlations, warning=FALSE}
 
 # subset data to just environmental variables for correlation tests
 

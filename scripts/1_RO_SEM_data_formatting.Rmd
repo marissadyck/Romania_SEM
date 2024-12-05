@@ -2,11 +2,13 @@
 title: "Romania SEM Data Formatting"
 author: "Marissa Dyck"
 date: "2024-08-07"
-output: 
+output:
+  pdf_document:
+    toc: true
   html_document:
     theme: journal
-    toc: yes
-    toc_float: yes
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
