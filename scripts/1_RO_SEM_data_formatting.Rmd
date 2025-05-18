@@ -21,9 +21,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 A few notes about this script.
 
-If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[] from tMarissa Dyck's GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
+If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[https://github.com/marissadyck/Romania_SEM] from the author's (Marissa A. Dyck) GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
 
-Also make sure you open RStudio through the R project (Romania_SEM.Rproj) this will automatically set your working directory to the correct place (wherever you saved the repository) and ensure you don't have to change the file paths for the data. 
+Also make sure you open RStudio through the R project (Romania_SEM.Rproj) in the repo this will automatically set your working directory to the correct place (wherever you saved the repository) and ensure you don't have to change the file paths for the data. 
 
 If you have question please email the author,   
 
@@ -43,7 +43,7 @@ You can download R and RStudio [HERE](https://posit.co/download/rstudio-desktop/
 
 ## R markdown
 
-This script is written in R markdown and thus uses a mix of coding markup languages and R. If you are planning to run this script with new data or make any modifications you will want to be familiar with some basics of R markdown.
+This script is written in R markdown and thus uses a mix of coding markup languages and R. If you are planning to run this script with new data or make any modifications you will want to be familiar with some basics of R markdown or transfer code in the code chunks to a script.
 
 Below is an R markdown cheatsheet to help you get started,    
 [R markdown cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf)    
@@ -51,28 +51,32 @@ Below is an R markdown cheatsheet to help you get started,
 
 ## Install packages
 
-If you don't already have the following packages installed, use the code below to install them.
+If you don't already have the following packages installed, use the code below to install them. *Note this code chunk will NOT automatically run when the file is knit since eval=FALSE is set, because I already have the packages and don't want to reinsall them every time. You will need to run this chunk separately if you need to install these packages*. You only need to do this once.
 
 ```{r install packages, eval=FALSE}
 
-install.packages(tidyverse) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
-install.packages(janitor) # used for cleaning up data
+install.packages('tidyverse') # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
+install.packages('janitor') # used for cleaning up data
 ```
 
 
 ## Load libraries
 
-Then load the packages to your library.
+Then load the packages to your library. You will need to do this anytime you start a new session in R.
 
 ```{r libraries}
 
-library('tidyverse') # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
+library(tidyverse) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
 library(janitor) # used for cleaning up data
 ```
 
 # Data
 
 ## Camera data
+
+We will start with the camera data from our remote camera traps that were deployed in Romania. 
+
+### Import data
 
 We can load both data files at once and rowbind them since they have the same columns using a function in the *Purrr* package.
 
@@ -94,17 +98,17 @@ cameras <-
 ```
 
 
-
 View this data, by using `View(cameras)` or clicking on the object in the *environment*.
  
+### Format data
 
 We need to do a bit of data cleaning to make this file usable for our analysis. The code chunk below will,    
 
 1. read in the data again   
 2. specify how to read in the columns   
 3. set the column names to lowercase for easier coding later   
-4. reformat some columns so data is approporiate for analysis   
-5. seelct only data we need   
+4. reformat some columns so data is appropriate for analysis   
+5. and finally select only to columns of data we need   
 
 ```{r format camera data}
 
@@ -141,6 +145,8 @@ cameras <-
                  
 ```
 
+### Data checks
+
 Let's take a look at this data using a few common functions
 
 ```{r explore cameras data}
@@ -161,7 +167,7 @@ Everything looks good. 140 trap sites (trapcode), no NAs
 
 
 ## Animal data
- Now let's import the data from the camera traps. 
+ Now let's import the detection data from the camera traps. 
  
 ### Import data
 
@@ -271,13 +277,13 @@ levels(animals$species)
  
 #### Trapcodes
 
-Let's check that no trap codes are mis entered or repeated etc.
+Let's check that no trap codes are mis-entered or repeated etc.
 
 ```{r check trapcode}
 
 levels(animals$trapcode)
 ```
-Hmm there seem to be more than in the camera data, this may be because it's still counting the trapcodes from session 1 even though we filtered those out in the data formatting steps. Let's try something else to check if the trapcodes match the camera data
+Hmm there seem to be more sites than in the camera data, this may be because it's still counting the trapcodes from session 1 even though we filtered those out in the data formatting steps. Let's try something else to check if the trapcodes match the camera data
 
 ```{r check trapcodes}
 
@@ -289,7 +295,7 @@ setdiff(levels(animals$trapcode),
 setdiff(levels(cameras$trapcode),
         levels(animals$trapcode))
 ```
-It looks like the animals data has extra trapcodes but no missing ones from the cameras data. I think it is still retainig the codes from session 1 in Rs memory for some reason after we used the filter function to remove them, let's check by looking for any data from the trapcodes printed above
+It looks like the animals data has extra trapcodes but no missing ones from the cameras data. I think it is still retaining the codes from session 1 in Rs memory for some reason after we used the filter function to remove them, let's check by looking for any data from the trapcodes printed above
 
 ```{r}
 animals %>% 
@@ -297,60 +303,151 @@ animals %>%
   filter(trapcode == '40')
 ```
 
-No data, so I think we are good 
+No data, so we are good 
 
-### Species occurrence
+##  Trap effort
 
-Now we need to calculate species occurrence from the animals data, the code chunk below will   
+Now we need to load in the trap effort so we can check that we can quanitfy camera effort for each site. 
 
-1. create a new object called species occurrence that is a product of the animals data   
-2. group the data   
-3. count the number of observations in each group   
-4. pivot the data to wide formate for use in SEM    
+```{r trap effort data}
 
-
-```{r species occurrence}
-
-# count occurrences per species per season and trap
-
-species_occurrences <- animals %>% 
+effort <- file.path('data/raw',
+                    
+                    # provide file names
+                    c('Trap_Effort_S2.csv',
+                    'Trap_Effort_S3.csv')) %>% 
   
-  # group data
-  group_by(session, trapcode, species) %>% 
+  map(~.x %>% 
+        
+        read_csv(.) %>% 
+        
+        # set column names to lowercase for coding ease
+        set_names(
+          names(.) %>% 
+            tolower())) %>% 
   
-  # use summarize to count data
-  summarize(n = n()) %>% 
+  purrr::set_names(c('session_2',
+                     'session_3'))
+
+```
+
+### Data checks
+
+```{r effort data check}
+
+str(effort)
+```
+What I need to do is add a column to each data frame that specifies the session, and add a column that totals the number of active camera days from each occasion since this data were originally formatted for a different occupancy analysis with 2-week camera occasions
+
+### Format data
+
+#### Add columns
+
+The code below adds two new columns to each data frame separately that specifies the session, and totals the number of days the camera was functioning from the raw data. 
+```{r format effort}
+
+# add session column to each and total effort column
+effort$session_2 <- effort$session_2 %>% 
   
+  add_column(.,
+             session = 2) %>% 
+  
+  mutate(trap_effort = rowSums(across(occasion_1:occasion_8)))
+
+head(effort$session_2)
+
+
+effort$session_3 <- effort$session_3 %>% 
+  
+  add_column(.,
+             session = 3) %>% 
+  
+   mutate(trap_effort = rowSums(across(occasion_1:occasion_7)))
+
+head(effort$session_3)
+```
+
+#### Bind data
+
+Now with both select just the columns we need and the we will rowbind the data so we have one data frame with info for both sessions
+
+```{r}
+effort_tidy <- effort %>% 
+  
+  map(~.x %>% 
+        
+        select(trapcode,
+               session,
+               trap_effort) %>% 
+        
+         # make session a factor to join with other data
+  mutate(session = as.factor(session)))
+  
+ 
+# check dta
+head(effort_tidy)
+
+# bind data
+trap_effort <- 
+bind_rows(effort_tidy)
+```
+
+
+Remove messy data lists that we don't need 
+
+```{r}
+rm(effort)
+rm(effort_tidy)
+```
+
+
+
+### Join animals and effort data and count species occurrences
+
+Now we want to join the animals and effort data frames so we have a single data frame for our analysis, and also we will count the number of species occurrences (independent detections) from the animal data and add a column for this as it will be the response variable in our analysis
+```{r join data}
+animals_effort <- animals %>% 
+  
+  # join data frames
+  left_join(trap_effort,
+            by = c('session', 'trapcode')) %>% 
+  
+   # group data
+  group_by(session, trapcode, species, trap_effort) %>% 
+  
+  # use summarize to species ocurrences
+  summarize(n = n(),
+            .groups = 'drop') %>% 
+  
+  # ensure only one row per unique combination is returned
+  distinct(session, trapcode, species, .keep_all = TRUE) %>% 
+  
+  # pivot the data to wide format so each species has a column
   pivot_wider(names_from = species,
               values_from = n,
-              values_fill = 0) 
+              values_fill = list(n = 0))
 
-
+# check data
+head(animals_effort)
 ```
 
 
-Now let's remove the old data we don't need anymore
 
-```{r remove animals data}
-# remove animals data from global env
+### Merge camera and occurrence
 
-rm(animals)
-```
-
-
-## Merge camera and occurrence
-
-Let's merge the camera and occurrence data into one file we can use for analysis
+Finally let's merge the camera and occurrence data so we have all the data (response variables, covariates, summary info) in one data frame
 
 ```{r merge cams and occurrences}
 
 # merge species occurrence data with the camera site variables from cams
 
-ro_sem_dat <- species_occurrences %>% 
+ro_sem_data_effort <- animals_effort %>% 
   
-  # join with leftjoin
+  # join data
   left_join(cameras,
     by = c('session', 'trapcode')) %>% 
+  
+  # remove any NAS
   drop_na() %>% 
   
   # set the species column names to lowercase and clean them up
@@ -361,12 +458,13 @@ ro_sem_dat <- species_occurrences %>%
   rename(hare = european_hare)
 ```
 
-## Save new data
 
-Now we need to export and save this data as a csv for later use
+### Save new cleaned data
+
 ```{r save data}
-
-write_csv(ro_sem_dat, 
-          'data/processed/ro_sem_dat_2018-2019.csv')
+write_csv(ro_sem_data_effort,
+          'data/processed/ro_sem_data_effort_2018-2019.csv')
 ```
+
+
 

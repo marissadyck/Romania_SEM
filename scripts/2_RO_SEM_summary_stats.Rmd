@@ -3,12 +3,12 @@ title: "Romania SEM"
 author: "Marissa Dyck"
 date: "2024-08-08"
 output:
-  pdf_document:
-    toc: true
   html_document:
     theme: journal
     toc: true
     toc_float: true
+  pdf_document:
+    toc: true
 ---
 
 
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 A few notes about this script.
 
-If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[https://github.com/marissadyck/Romania_SEM] from Marissa Dyck's GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
+If you are want to run through the full analysis with the published data make sure you download the whole (Romania_SEM repository)[https://github.com/marissadyck/Romania_SEM] from the author's (Marissa A. Dyck) GitHub. This will ensure you have all the files, data, and proper folder structure you will need to run this code and associated analyses.
 
 Also make sure you open RStudio through the R project (Romania_SEM.Rproj) this will automatically set your working directory to the correct place (wherever you saved the repository) and ensure you don't have to change the file paths for the data. 
 
@@ -52,7 +52,7 @@ Below is an R markdown cheatsheet to help you get started,
 
 ## Install packages
 
-If you don't already have the following packages installed, use the code below to install them.
+If you don't already have the following packages installed, use the code below to install them. *Note this code chunk will NOT automatically run when the file is knit since eval=FALSE is set, because I already have the packages and don't want to reinsall them every time. You will need to run this chunk separately if you need to install these packages*. You only need to do this once.
 
 ```{r install packages, eval=FALSE}
 
@@ -81,13 +81,13 @@ library(purrrlyr) # data manipulation
 
 ## Import
 
-Let's read in the data that we cleaned and formatted with the earlier code '1_RO_data_formatting'
+Let's read in the data that we cleaned and formatted with the earlier code '1_RO_SEM_data_formatting'
 
 In this code chunk I will also add columns with the scaled the predictor variables fo analysis
 
 ```{r import data}
 
-ro_sem_dat <- read_csv('data/processed/ro_sem_dat_2018-2019.csv') %>% 
+ro_sem_dat <- read_csv('data/processed/ro_sem_data_effort_2018-2019.csv') %>% 
   
   # scale predictor variables
   mutate(z.s = scale(z),
@@ -121,6 +121,8 @@ ro_sem_dat %>%
                           wild_cat))
 
 ```
+
+
 ### Species occurrences
 
 We will also want some summary information for each species
@@ -165,7 +167,7 @@ ro_sem_dat %>%
 
 ## Correlations
 
-Before we run any models we need to test an assumption of idepended and see if any of our potential variables are correlated.
+Before we run any models we need to test an assumption of Independence and see if any of our potential variables are correlated.
 
 ```{r correlations, warning=FALSE}
 
@@ -188,43 +190,118 @@ chart.Correlation(ro_sem_env,
 
 > all correlations for chosen environmental variables >0.25
 
+## Camera activity check
+
+Since we aren't accounting for the camera activity/effort because we have a poisson response variable that we want to keep as poisson; I want to check that we aren't introducing bias by using the raw occurrence data. I'm going to check this by seeing if there are correlations in camera activity and number of detections per species first, and if there are see if the cameras that have higher detections are biased in any way (correlated) with the environmental variables in our model
+
+```{r cam activity check, warning=FALSE}
+
+#
+ro_sem_dat %>% 
+  
+  select(trap_effort,
+         wolf,
+         lynx,
+         wild_cat,
+         fox,
+         red_deer,
+         roe_deer,
+         wild_boar,
+         hare) %>% 
+  
+  chart.Correlation(.,
+                  histogram = TRUE,
+                  pch = 19)
+```
+
+Nothing is over 0.5 so doesn't seem to be a huge concern that cameras that were active longer have more detections although some positive relationships as you'd expect
+
+Now we will check if cameras that were active longer are biased towards any environmental variables
+```{r camera env check, warning=FALSE}
+
+ro_sem_dat %>% 
+  
+  select(trap_effort,
+        z,
+        distlocalr,
+        tri5,
+        clc_forest) %>% 
+  
+  chart.Correlation(.,
+                  histogram = TRUE,
+                  pch = 19)
+```
+Also no biases here for camera activity, which is good.
+
 
 # Analysis
 
-The code chunks below define the models for our three hypotheses
+The code chunks below define the models for our three hypotheses including the hypothesized model and final optimized models
 
 * top-down  
 * bottom-up   
-* combined    
+* combined  
 
-### Top-down
+> The formal analysis was trasnferred to a basic r script as a bug with the latest version of *piceweiseSEM* package and the summary doesn't print tests of directed separation. This may have been corrected after publication of this analysis
 
-#### Hypothesis
+
+## Top-down
+
+### Hypothesis
 
 This first chunk is our initial model as we defined it a priori based on previous research and the literature review
 
-```{r top-down model hypothesis}
+```{r top-down model hypothesis, eval=FALSE, echo=FALSE}
 
 sem.top_down_a <- 
   psem(
-    glm(lynx ~ denslocalr.s + clc_forest.s, family = poisson(link = 'log'), data = ro_sem_dat),
-    glm(wolf ~ denslocalr.s + clc_forest.s + tri5.s, family = poisson(link = 'log'), data = ro_sem_dat),
-    glm(fox ~ lynx + wolf, family = poisson(link = 'log'), data = ro_sem_dat),
-    glm(wild_cat ~ fox + lynx + z.s + tri5.s + clc_forest.s, family = poisson(link = 'log'), data = ro_sem_dat),
-    glm(hare ~ lynx + wild_cat + fox, family = poisson(link = 'log'), data = ro_sem_dat),
-    glm(red_deer ~ wolf, family = poisson(link = 'log'), data = ro_sem_dat),
-    glm(roe_deer ~ wolf + lynx, family = poisson(link = 'log'), data = ro_sem_dat),
+    
+    # lynx structured equation
+    glm(lynx ~ denslocalr.s + 
+          clc_forest.s, 
+        family = poisson(link = 'log'), data = ro_sem_dat),
+    # wolf structured equation
+    glm(wolf ~ denslocalr.s + 
+          clc_forest.s + 
+          tri5.s, 
+        family = poisson(link = 'log'), data = ro_sem_dat),
+    # fox structured equation
+    glm(fox ~ lynx + wolf, 
+        family = poisson(link = 'log'), data = ro_sem_dat),
+    # wildcat structured equation
+    glm(wild_cat ~ fox + 
+          lynx + 
+          z.s + 
+          tri5.s + 
+          clc_forest.s, 
+        family = poisson(link = 'log'), data = ro_sem_dat),
+    # hare structured equation
+    glm(hare ~ lynx + 
+          wild_cat + 
+          fox, 
+        family = poisson(link = 'log'), data = ro_sem_dat),
+    # red deer structured equation
+    glm(red_deer ~ wolf, 
+        family = poisson(link = 'log'), data = ro_sem_dat),
+    # roe deer structured equation
+    glm(roe_deer ~ wolf + 
+          lynx, 
+        family = poisson(link = 'log'), data = ro_sem_dat),
+    # boar structured equation
     glm(wild_boar ~ wolf, family = poisson(link = 'log'), data = ro_sem_dat),
+    
+    # correlations that don't imply causal links
     (lynx %~~% wolf)
   )
 
+# check model summary
 summary(sem.top_down_a)
 ```
 #### Optimized
 
 Now, based on the tests of directed separation, we will add significant pathways to model that make biological sense and fit hypotheses (top-down) and remove non-significant pathways and pathways with coefficient estimates that do not fit the hypothesis (e.g. positive estimate for a hypothesized negative causal pathway)
 
-```{r top-down model optimized}
+```{r top-down model optimized, eval=FALSE, echo=FALSE}
 
 sem.top_down_b <- 
   psem(
@@ -256,7 +333,7 @@ This section will define our bottom-up model
 
 Again, this first chunk is our initial model as we defined it a priori based on previous research and the literature review
 
-```{r bottom-up hypothesis}
+```{r bottom-up hypothesis, eval=FALSE, echo=FALSE}
 
 sem.bottom_up_a <- 
   psem(
@@ -283,7 +360,7 @@ summary(sem.bottom_up_a)
 
 And again,  based on the tests of directed separation, we will add significant pathways to model that make biological sense and fit hypotheses (top-down) and remove non-significant pathways and pathways with coefficient estimates that do not fit the hypothesis (e.g. positive estimate for a hypothesized negative causal pathway)
 
-```{r bottom-up optimized}
+```{r bottom-up optimized, eval=FALSE, echo=FALSE}
 
 sem.bottom_up_b <- 
   psem(
@@ -316,7 +393,7 @@ summary(sem.bottom_up_b)
 
 Lastly we will define a combined model that includes both bottom-up and top-down processes/interactions. This model will be based on the optimized models for both top-down and bottom-up
 
-```{r combined model}
+```{r combined model, eval=FALSE, echo=FALSE}
 
 sem.combined <- 
   psem(

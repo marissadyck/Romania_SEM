@@ -1504,14 +1504,14 @@ border-radius: 0px;
 <h2>Notes</h2>
 <p>A few notes about this script.</p>
 <p>If you are want to run through the full analysis with the published
-data make sure you download the whole (Romania_SEM repository)[] from
-tMarissa Dyck’s GitHub. This will ensure you have all the files, data,
-and proper folder structure you will need to run this code and
-associated analyses.</p>
+data make sure you download the whole (Romania_SEM repository)[<a href="https://github.com/marissadyck/Romania_SEM" class="uri">https://github.com/marissadyck/Romania_SEM</a>] from the
+author’s (Marissa A. Dyck) GitHub. This will ensure you have all the
+files, data, and proper folder structure you will need to run this code
+and associated analyses.</p>
 <p>Also make sure you open RStudio through the R project
-(Romania_SEM.Rproj) this will automatically set your working directory
-to the correct place (wherever you saved the repository) and ensure you
-don’t have to change the file paths for the data.</p>
+(Romania_SEM.Rproj) in the repo this will automatically set your working
+directory to the correct place (wherever you saved the repository) and
+ensure you don’t have to change the file paths for the data.</p>
 <p>If you have question please email the author,</p>
 <p>Marissa A. Dyck<br />
 Postdoctoral research fellow<br />
@@ -1531,7 +1531,8 @@ and with RStudio version 2024.04.2+764.</p>
 <p>This script is written in R markdown and thus uses a mix of coding
 markup languages and R. If you are planning to run this script with new
 data or make any modifications you will want to be familiar with some
-basics of R markdown.</p>
+basics of R markdown or transfer code in the code chunks to a
+script.</p>
 <p>Below is an R markdown cheatsheet to help you get started,<br />
 <a href="https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf">R
 markdown cheatsheet</a></p>
@@ -1539,18 +1540,23 @@ markdown cheatsheet</a></p>
 <div id="install-packages" class="section level2">
 <h2>Install packages</h2>
 <p>If you don’t already have the following packages installed, use the
-code below to install them.</p>
-<pre class="r"><code>install.packages(tidyverse) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
-install.packages(janitor) # used for cleaning up data</code></pre>
+code below to install them. <em>Note this code chunk will NOT
+automatically run when the file is knit since eval=FALSE is set, because
+I already have the packages and don’t want to reinsall them every time.
+You will need to run this chunk separately if you need to install these
+packages</em>. You only need to do this once.</p>
+<pre class="r"><code>install.packages(&#39;tidyverse&#39;) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()
+install.packages(&#39;janitor&#39;) # used for cleaning up data</code></pre>
 </div>
 <div id="load-libraries" class="section level2">
 <h2>Load libraries</h2>
-<p>Then load the packages to your library.</p>
-<pre class="r"><code>library(&#39;tidyverse&#39;) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()</code></pre>
+<p>Then load the packages to your library. You will need to do this
+anytime you start a new session in R.</p>
+<pre class="r"><code>library(tidyverse) # data tidying, visualization, and much more; this will load all tidyverse packages, can see complete list using tidyverse_packages()</code></pre>
 <pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
 ## ✔ dplyr     1.1.2     ✔ readr     2.1.4
 ## ✔ forcats   1.0.0     ✔ stringr   1.5.0
-## ✔ ggplot2   3.4.2     ✔ tibble    3.2.1
+## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
 ## ✔ lubridate 1.9.3     ✔ tidyr     1.3.0
 ## ✔ purrr     1.0.2     
 ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
@@ -1570,6 +1576,10 @@ install.packages(janitor) # used for cleaning up data</code></pre>
 <h1>Data</h1>
 <div id="camera-data" class="section level2">
 <h2>Camera data</h2>
+<p>We will start with the camera data from our remote camera traps that
+were deployed in Romania.</p>
+<div id="import-data" class="section level3">
+<h3>Import data</h3>
 <p>We can load both data files at once and rowbind them since they have
 the same columns using a function in the <em>Purrr</em> package.</p>
 <pre class="r"><code>cameras &lt;- 
@@ -1602,6 +1612,9 @@ the same columns using a function in the <em>Purrr</em> package.</p>
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <p>View this data, by using <code>View(cameras)</code> or clicking on
 the object in the <em>environment</em>.</p>
+</div>
+<div id="format-data" class="section level3">
+<h3>Format data</h3>
 <p>We need to do a bit of data cleaning to make this file usable for our
 analysis. The code chunk below will,</p>
 <ol style="list-style-type: decimal">
@@ -1611,9 +1624,9 @@ analysis. The code chunk below will,</p>
 </li>
 <li>set the column names to lowercase for easier coding later<br />
 </li>
-<li>reformat some columns so data is approporiate for analysis<br />
+<li>reformat some columns so data is appropriate for analysis<br />
 </li>
-<li>seelct only data we need</li>
+<li>and finally select only to columns of data we need</li>
 </ol>
 <pre class="r"><code>cameras &lt;- 
   
@@ -1645,6 +1658,9 @@ analysis. The code chunk below will,</p>
   # select only columns of interest for SEM analysis and merginf with animals data frame
   
   select(session, trapcode, z, denslocalr, tri5, clc_forest, distnatlro, distsettle, diststream, distlocalr) </code></pre>
+</div>
+<div id="data-checks" class="section level3">
+<h3>Data checks</h3>
 <p>Let’s take a look at this data using a few common functions</p>
 <pre class="r"><code># check data structure
 str(cameras)</code></pre>
@@ -1705,10 +1721,11 @@ head(cameras,
 ## # ℹ 2 more variables: diststream &lt;dbl&gt;, distlocalr &lt;dbl&gt;</code></pre>
 <p>Everything looks good. 140 trap sites (trapcode), no NAs</p>
 </div>
+</div>
 <div id="animal-data" class="section level2">
 <h2>Animal data</h2>
-<p>Now let’s import the data from the camera traps.</p>
-<div id="import-data" class="section level3">
+<p>Now let’s import the detection data from the camera traps.</p>
+<div id="import-data-1" class="section level3">
 <h3>Import data</h3>
 <p>This is a csv file with information from the camera traps provided by
 (Foundation Conservation Carpathia) [<a href="https://www.carpathia.org/" class="uri">https://www.carpathia.org/</a>], their staff and volunteers
@@ -1720,20 +1737,18 @@ animals &lt;- read_csv(&#39;data/raw/animals_on_cameras_2018-2019.csv&#39;) </co
 ## e.g.:
 ##   dat &lt;- vroom(...)
 ##   problems(dat)</code></pre>
-<pre><code>## Rows: 6621 Columns: 25
+<pre><code>## Rows: 6621 Columns: 24
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
-## chr  (16): GMU, TrapSite, TrapCode, Camera, Type, Date, RDate, Time, Occasio...
-## dbl   (6): Sort, Session, X, Y, Z, Sequence
-## lgl   (1): Detector
-## date  (2): StartDate, EndDate
+## chr (18): GMU, TrapSite, StartDate, EndDate, TrapCode, Camera, Type, Date, R...
+## dbl  (6): Sort, Session, X, Y, Z, Sequence
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
 <p>View this data, by using <code>View(animals)</code> or clicking on
 the object in the <em>environment</em>.</p>
 </div>
-<div id="format-data" class="section level3">
+<div id="format-data-1" class="section level3">
 <h3>Format data</h3>
 <p>We also need to do a bit of data cleaning to make this file usable
 for our analysis. The code chunk below will,</p>
@@ -1799,7 +1814,7 @@ animals &lt;- read_csv(&#39;data/raw/animals_on_cameras_2018-2019.csv&#39;,
 ##   problems(dat)</code></pre>
 <p>Will get an error about parsing issues just ignore.</p>
 </div>
-<div id="data-checks" class="section level3">
+<div id="data-checks-1" class="section level3">
 <h3>Data checks</h3>
 <div id="overall" class="section level4">
 <h4>Overall</h4>
@@ -1808,20 +1823,20 @@ animals &lt;- read_csv(&#39;data/raw/animals_on_cameras_2018-2019.csv&#39;,
 str(animals)</code></pre>
 <pre><code>## tibble [4,684 × 5] (S3: tbl_df/tbl/data.frame)
 ##  $ session : Factor w/ 3 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;: 2 2 2 2 2 2 2 2 2 2 ...
-##  $ date    : Factor w/ 452 levels &quot;1/1/18&quot;,&quot;1/13/18&quot;,..: 68 70 70 71 71 72 72 73 73 74 ...
+##  $ date    : Factor w/ 360 levels &quot;1/1/18&quot;,&quot;1/13/18&quot;,..: 68 70 70 71 71 72 72 73 73 74 ...
 ##  $ trapcode: Factor w/ 186 levels &quot;40&quot;,&quot;41&quot;,&quot;64&quot;,..: 46 46 48 46 48 46 48 46 48 46 ...
 ##  $ type    : Factor w/ 2 levels &quot;P&quot;,&quot;V&quot;: 1 1 1 1 1 1 1 1 1 1 ...
 ##  $ species : Factor w/ 22 levels &quot;Bear&quot;,&quot;European hare&quot;,..: 3 3 3 3 3 3 3 3 3 3 ...</code></pre>
 <pre class="r"><code># summary stats for columns
 summary(animals)</code></pre>
-<pre><code>##  session       date         trapcode    type          species   
-##  1:   0   3/30/19:  50   127    : 212   P:4684   Fox      :985  
-##  2:2089   3/22/19:  40   249    : 142   V:   0   Red deer :773  
-##  3:2595   3/24/19:  40   124    : 114            Wild boar:694  
-##           3/18/19:  38   289    : 112            Bear     :604  
-##           2/5/19 :  37   170    : 104            Roe deer :386  
-##           1/13/20:  37   153    : 102            Lynx     :332  
-##           (Other):4442   (Other):3898            (Other)  :910</code></pre>
+<pre><code>##  session        date         trapcode    type          species   
+##  1:   0   3/30/19 :  50   127    : 212   P:4684   Fox      :985  
+##  2:2089   10/12/19:  44   249    : 142   V:   0   Red deer :773  
+##  3:2595   10/13/19:  41   124    : 114            Wild boar:694  
+##           3/22/19 :  40   289    : 112            Bear     :604  
+##           3/24/19 :  40   170    : 104            Roe deer :386  
+##           3/18/19 :  38   153    : 102            Lynx     :332  
+##           (Other) :4431   (Other):3898            (Other)  :910</code></pre>
 <pre class="r"><code># print first few rows
 head(animals,
      n = 25)</code></pre>
@@ -1857,7 +1872,7 @@ mistakes</p>
 </div>
 <div id="trapcodes" class="section level4">
 <h4>Trapcodes</h4>
-<p>Let’s check that no trap codes are mis entered or repeated etc.</p>
+<p>Let’s check that no trap codes are mis-entered or repeated etc.</p>
 <pre class="r"><code>levels(animals$trapcode)</code></pre>
 <pre><code>##   [1] &quot;40&quot;          &quot;41&quot;          &quot;64&quot;          &quot;22&quot;          &quot;66&quot;         
 ##   [6] &quot;17&quot;          &quot;18&quot;          &quot;19&quot;          &quot;36&quot;          &quot;37&quot;         
@@ -1897,7 +1912,7 @@ mistakes</p>
 ## [176] &quot;306&quot;         &quot;256&quot;         &quot;271&quot;         &quot;278&quot;         &quot;234_316&quot;    
 ## [181] &quot;288&quot;         &quot;267_310&quot;     &quot;311&quot;         &quot;303&quot;         &quot;299&quot;        
 ## [186] &quot;234&quot;</code></pre>
-<p>Hmm there seem to be more than in the camera data, this may be
+<p>Hmm there seem to be more sites than in the camera data, this may be
 because it’s still counting the trapcodes from session 1 even though we
 filtered those out in the data formatting steps. Let’s try something
 else to check if the trapcodes match the camera data</p>
@@ -1917,7 +1932,7 @@ setdiff(levels(cameras$trapcode),
         levels(animals$trapcode))</code></pre>
 <pre><code>## character(0)</code></pre>
 <p>It looks like the animals data has extra trapcodes but no missing
-ones from the cameras data. I think it is still retainig the codes from
+ones from the cameras data. I think it is still retaining the codes from
 session 1 in Rs memory for some reason after we used the filter function
 to remove them, let’s check by looking for any data from the trapcodes
 printed above</p>
@@ -1927,55 +1942,261 @@ printed above</p>
 <pre><code>## # A tibble: 0 × 5
 ## # ℹ 5 variables: session &lt;fct&gt;, date &lt;fct&gt;, trapcode &lt;fct&gt;, type &lt;fct&gt;,
 ## #   species &lt;fct&gt;</code></pre>
-<p>No data, so I think we are good</p>
+<p>No data, so we are good</p>
 </div>
 </div>
-<div id="species-occurrence" class="section level3">
-<h3>Species occurrence</h3>
-<p>Now we need to calculate species occurrence from the animals data,
-the code chunk below will</p>
-<ol style="list-style-type: decimal">
-<li>create a new object called species occurrence that is a product of
-the animals data<br />
-</li>
-<li>group the data<br />
-</li>
-<li>count the number of observations in each group<br />
-</li>
-<li>pivot the data to wide formate for use in SEM</li>
-</ol>
-<pre class="r"><code># count occurrences per species per season and trap
+</div>
+<div id="trap-effort" class="section level2">
+<h2>Trap effort</h2>
+<p>Now we need to load in the trap effort so we can check that we can
+quanitfy camera effort for each site.</p>
+<pre class="r"><code>effort &lt;- file.path(&#39;data/raw&#39;,
+                    
+                    # provide file names
+                    c(&#39;Trap_Effort_S2.csv&#39;,
+                    &#39;Trap_Effort_S3.csv&#39;)) %&gt;% 
+  
+  map(~.x %&gt;% 
+        
+        read_csv(.) %&gt;% 
+        
+        # set column names to lowercase for coding ease
+        set_names(
+          names(.) %&gt;% 
+            tolower())) %&gt;% 
+  
+  purrr::set_names(c(&#39;session_2&#39;,
+                     &#39;session_3&#39;))</code></pre>
+<pre><code>## Rows: 64 Columns: 9
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): TrapCode
+## dbl (8): Occasion_1, Occasion_2, Occasion_3, Occasion_4, Occasion_5, Occasio...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## Rows: 76 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (1): TrapCode
+## dbl (7): Occasion_1, Occasion_2, Occasion_3, Occasion_4, Occasion_5, Occasio...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<div id="data-checks-2" class="section level3">
+<h3>Data checks</h3>
+<pre class="r"><code>str(effort)</code></pre>
+<pre><code>## List of 2
+##  $ session_2: spc_tbl_ [64 × 9] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+##   ..$ trapcode  : chr [1:64] &quot;118&quot; &quot;119&quot; &quot;120&quot; &quot;122&quot; ...
+##   ..$ occasion_1: num [1:64] 14 14 14 14 14 14 14 0 14 14 ...
+##   ..$ occasion_2: num [1:64] 14 14 14 14 12 14 14 9 14 14 ...
+##   ..$ occasion_3: num [1:64] 14 14 14 14 14 11 14 14 14 14 ...
+##   ..$ occasion_4: num [1:64] 14 14 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_5: num [1:64] 14 14 14 14 13 14 13 14 14 14 ...
+##   ..$ occasion_6: num [1:64] 14 14 14 14 14 14 14 12 14 14 ...
+##   ..$ occasion_7: num [1:64] 14 14 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_8: num [1:64] 11 11 14 9 11 14 8 14 14 10 ...
+##   ..- attr(*, &quot;spec&quot;)=
+##   .. .. cols(
+##   .. ..   TrapCode = col_character(),
+##   .. ..   Occasion_1 = col_double(),
+##   .. ..   Occasion_2 = col_double(),
+##   .. ..   Occasion_3 = col_double(),
+##   .. ..   Occasion_4 = col_double(),
+##   .. ..   Occasion_5 = col_double(),
+##   .. ..   Occasion_6 = col_double(),
+##   .. ..   Occasion_7 = col_double(),
+##   .. ..   Occasion_8 = col_double()
+##   .. .. )
+##   ..- attr(*, &quot;problems&quot;)=&lt;externalptr&gt; 
+##  $ session_3: spc_tbl_ [76 × 8] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+##   ..$ trapcode  : chr [1:76] &quot;216&quot; &quot;217&quot; &quot;218&quot; &quot;219&quot; ...
+##   ..$ occasion_1: num [1:76] 14 14 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_2: num [1:76] 14 14 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_3: num [1:76] 14 14 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_4: num [1:76] 14 14 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_5: num [1:76] 14 12 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_6: num [1:76] 14 14 14 14 14 14 14 14 14 14 ...
+##   ..$ occasion_7: num [1:76] 6 14 14 14 14 14 14 14 14 14 ...
+##   ..- attr(*, &quot;spec&quot;)=
+##   .. .. cols(
+##   .. ..   TrapCode = col_character(),
+##   .. ..   Occasion_1 = col_double(),
+##   .. ..   Occasion_2 = col_double(),
+##   .. ..   Occasion_3 = col_double(),
+##   .. ..   Occasion_4 = col_double(),
+##   .. ..   Occasion_5 = col_double(),
+##   .. ..   Occasion_6 = col_double(),
+##   .. ..   Occasion_7 = col_double()
+##   .. .. )
+##   ..- attr(*, &quot;problems&quot;)=&lt;externalptr&gt;</code></pre>
+<p>What I need to do is add a column to each data frame that specifies
+the session, and add a column that totals the number of active camera
+days from each occasion since this data were originally formatted for a
+different occupancy analysis with 2-week camera occasions</p>
+</div>
+<div id="format-data-2" class="section level3">
+<h3>Format data</h3>
+<div id="add-columns" class="section level4">
+<h4>Add columns</h4>
+<p>The code below adds two new columns to each data frame separately
+that specifies the session, and totals the number of days the camera was
+functioning from the raw data.</p>
+<pre class="r"><code># add session column to each and total effort column
+effort$session_2 &lt;- effort$session_2 %&gt;% 
+  
+  add_column(.,
+             session = 2) %&gt;% 
+  
+  mutate(trap_effort = rowSums(across(occasion_1:occasion_8)))
 
-species_occurrences &lt;- animals %&gt;% 
+head(effort$session_2)</code></pre>
+<pre><code>## # A tibble: 6 × 11
+##   trapcode occasion_1 occasion_2 occasion_3 occasion_4 occasion_5 occasion_6
+##   &lt;chr&gt;         &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
+## 1 118              14         14         14         14         14         14
+## 2 119              14         14         14         14         14         14
+## 3 120              14         14         14         14         14         14
+## 4 122              14         14         14         14         14         14
+## 5 124              14         12         14         14         13         14
+## 6 125              14         14         11         14         14         14
+## # ℹ 4 more variables: occasion_7 &lt;dbl&gt;, occasion_8 &lt;dbl&gt;, session &lt;dbl&gt;,
+## #   trap_effort &lt;dbl&gt;</code></pre>
+<pre class="r"><code>effort$session_3 &lt;- effort$session_3 %&gt;% 
   
-  # group data
-  group_by(session, trapcode, species) %&gt;% 
+  add_column(.,
+             session = 3) %&gt;% 
   
-  # use summarize to count data
-  summarize(n = n()) %&gt;% 
+   mutate(trap_effort = rowSums(across(occasion_1:occasion_7)))
+
+head(effort$session_3)</code></pre>
+<pre><code>## # A tibble: 6 × 10
+##   trapcode occasion_1 occasion_2 occasion_3 occasion_4 occasion_5 occasion_6
+##   &lt;chr&gt;         &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
+## 1 216              14         14         14         14         14         14
+## 2 217              14         14         14         14         12         14
+## 3 218              14         14         14         14         14         14
+## 4 219              14         14         14         14         14         14
+## 5 220              14         14         14         14         14         14
+## 6 224              14         14         14         14         14         14
+## # ℹ 3 more variables: occasion_7 &lt;dbl&gt;, session &lt;dbl&gt;, trap_effort &lt;dbl&gt;</code></pre>
+</div>
+<div id="bind-data" class="section level4">
+<h4>Bind data</h4>
+<p>Now with both select just the columns we need and the we will rowbind
+the data so we have one data frame with info for both sessions</p>
+<pre class="r"><code>effort_tidy &lt;- effort %&gt;% 
   
+  map(~.x %&gt;% 
+        
+        select(trapcode,
+               session,
+               trap_effort) %&gt;% 
+        
+         # make session a factor to join with other data
+  mutate(session = as.factor(session)))
+  
+ 
+# check dta
+head(effort_tidy)</code></pre>
+<pre><code>## $session_2
+## # A tibble: 64 × 3
+##    trapcode session trap_effort
+##    &lt;chr&gt;    &lt;fct&gt;         &lt;dbl&gt;
+##  1 118      2               109
+##  2 119      2               109
+##  3 120      2               112
+##  4 122      2               107
+##  5 124      2               106
+##  6 125      2               109
+##  7 127      2               105
+##  8 129      2                91
+##  9 130      2               112
+## 10 132      2               108
+## # ℹ 54 more rows
+## 
+## $session_3
+## # A tibble: 76 × 3
+##    trapcode session trap_effort
+##    &lt;chr&gt;    &lt;fct&gt;         &lt;dbl&gt;
+##  1 216      3                90
+##  2 217      3                96
+##  3 218      3                98
+##  4 219      3                98
+##  5 220      3                98
+##  6 224      3                98
+##  7 225      3                98
+##  8 226      3                98
+##  9 227      3                98
+## 10 228      3                98
+## # ℹ 66 more rows</code></pre>
+<pre class="r"><code># bind data
+trap_effort &lt;- 
+bind_rows(effort_tidy)</code></pre>
+<p>Remove messy data lists that we don’t need</p>
+<pre class="r"><code>rm(effort)
+rm(effort_tidy)</code></pre>
+</div>
+</div>
+<div id="join-animals-and-effort-data-and-count-species-occurrences" class="section level3">
+<h3>Join animals and effort data and count species occurrences</h3>
+<p>Now we want to join the animals and effort data frames so we have a
+single data frame for our analysis, and also we will count the number of
+species occurrences (independent detections) from the animal data and
+add a column for this as it will be the response variable in our
+analysis</p>
+<pre class="r"><code>animals_effort &lt;- animals %&gt;% 
+  
+  # join data frames
+  left_join(trap_effort,
+            by = c(&#39;session&#39;, &#39;trapcode&#39;)) %&gt;% 
+  
+   # group data
+  group_by(session, trapcode, species, trap_effort) %&gt;% 
+  
+  # use summarize to species ocurrences
+  summarize(n = n(),
+            .groups = &#39;drop&#39;) %&gt;% 
+  
+  # ensure only one row per unique combination is returned
+  distinct(session, trapcode, species, .keep_all = TRUE) %&gt;% 
+  
+  # pivot the data to wide format so each species has a column
   pivot_wider(names_from = species,
               values_from = n,
-              values_fill = 0) </code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;session&#39;, &#39;trapcode&#39;. You can override
-## using the `.groups` argument.</code></pre>
-<p>Now let’s remove the old data we don’t need anymore</p>
-<pre class="r"><code># remove animals data from global env
+              values_fill = list(n = 0))
 
-rm(animals)</code></pre>
+# check data
+head(animals_effort)</code></pre>
+<pre><code>## # A tibble: 6 × 22
+##   session trapcode    trap_effort `European hare`   Fox  Wolf Badger  Lynx Human
+##   &lt;fct&gt;   &lt;chr&gt;             &lt;dbl&gt;           &lt;int&gt; &lt;int&gt; &lt;int&gt;  &lt;int&gt; &lt;int&gt; &lt;int&gt;
+## 1 2       118                 109               1     9     2      7    10     1
+## 2 2       119                 109               0     3     0      1     7     0
+## 3 2       120                 112               0     4     0      2     2     0
+## 4 2       121_176             104               0    12     0      0     0     0
+## 5 2       122                 107               0    14     3      0     8     0
+## 6 2       123_189_195         107               0    24     3      6     2     0
+## # ℹ 13 more variables: `Red deer` &lt;int&gt;, Bear &lt;int&gt;, `Roe deer` &lt;int&gt;,
+## #   `Wild boar` &lt;int&gt;, Mustelid &lt;int&gt;, Chamois &lt;int&gt;, Bird &lt;int&gt;,
+## #   `Wild cat` &lt;int&gt;, Dog &lt;int&gt;, Squirrel &lt;int&gt;, Livestock &lt;int&gt;,
+## #   Hedgehog &lt;int&gt;, Otter &lt;int&gt;</code></pre>
 </div>
-</div>
-<div id="merge-camera-and-occurrence" class="section level2">
-<h2>Merge camera and occurrence</h2>
-<p>Let’s merge the camera and occurrence data into one file we can use
-for analysis</p>
+<div id="merge-camera-and-occurrence" class="section level3">
+<h3>Merge camera and occurrence</h3>
+<p>Finally let’s merge the camera and occurrence data so we have all the
+data (response variables, covariates, summary info) in one data
+frame</p>
 <pre class="r"><code># merge species occurrence data with the camera site variables from cams
 
-ro_sem_dat &lt;- species_occurrences %&gt;% 
+ro_sem_data_effort &lt;- animals_effort %&gt;% 
   
-  # join with leftjoin
+  # join data
   left_join(cameras,
     by = c(&#39;session&#39;, &#39;trapcode&#39;)) %&gt;% 
+  
+  # remove any NAS
   drop_na() %&gt;% 
   
   # set the species column names to lowercase and clean them up
@@ -1985,11 +2206,11 @@ ro_sem_dat &lt;- species_occurrences %&gt;%
   clean_names() %&gt;% 
   rename(hare = european_hare)</code></pre>
 </div>
-<div id="save-new-data" class="section level2">
-<h2>Save new data</h2>
-<p>Now we need to export and save this data as a csv for later use</p>
-<pre class="r"><code>write_csv(ro_sem_dat, 
-          &#39;data/processed/ro_sem_dat_2018-2019.csv&#39;)</code></pre>
+<div id="save-new-cleaned-data" class="section level3">
+<h3>Save new cleaned data</h3>
+<pre class="r"><code>write_csv(ro_sem_data_effort,
+          &#39;data/processed/ro_sem_data_effort_2018-2019.csv&#39;)</code></pre>
+</div>
 </div>
 </div>
 
